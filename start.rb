@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 
 method "rand"
+require "yaml"
 
 # This function simply prints the grid given the grid array, the lentgh and the height
 def print_grid ( grid, gridl, gridh )
@@ -30,9 +31,12 @@ def print_grid ( grid, gridl, gridh )
 end
 
 # Seeds the first generation of the given the array
-def generation_init ( grid, gridl, gridh )
+def generation_init ( gridl, gridh )
         # TODO: read this data from an external file
         # For the moment will be a random
+
+        # Initializing a basic, dot filled (.) array
+        gen_grid = Array.new( gridl*gridh, "." )
 
         alives = rand((gridl*gridh)/6)+1 # Let's generate some random alive cells based on the grid size
         i = 0
@@ -46,9 +50,11 @@ def generation_init ( grid, gridl, gridh )
                 alives = alives - 1
             end
 
-            grid[rand((grid.length)-1)] = value
+            gen_grid[rand((gen_grid.length)-1)] = value
 
         end
+
+        return gen_grid
 
 end
 
@@ -255,20 +261,74 @@ def next_gen ( grid, gridl )
 
 end
 
-puts "== Welcome to the Game of Life =="
-puts ""
+def write_conf ( grid, gridl, gridh, start_gen, end_gen )
 
-# TODO: read these variables from a text file
-gridl = 128           # grid length (horizontal entries)
-gridh = 128           # grid heigth (vertical entries)
-start_gen = 1       # Starting generation
+    ymldump = {
+        'title' => 'Game of Life',
+        'config' => [
+            {'grid_length'         => "#{gridl}"},
+            {'grid_heigth'         => "#{gridh}"},
+            {'starting_generation' => "#{start_gen}"},
+            {'final_generation'    => "#{end_gen}"}
+        ],
+        'grid' => "#{grid}"
+    }
 
-current_gen = 1     # We always start from generation 1
-end_gen = 100        # The last generation
+    File.open($confloc, "w") do |file|
+         file.puts YAML::dump( ymldump )
+    end
 
-grid = Array.new(gridl*gridh, ".") # Initializing a blank (.) array
-generation_init grid, gridl, gridh
+end
 
+puts "== Welcome to the Game of Life ==\n\n"
+
+# If the external config is disabled (hardcoded) then will initialize the default variables
+gridl = 8                                   # grid length (horizontal entries)
+gridh = 4                                   # grid heigth (vertical entries)
+start_gen = 1                               # Starting generation
+end_gen = 100                               # The last generation
+
+grid = generation_init gridl, gridh          # Initializing the actual grid
+
+$confloc = "config.yml"   # config file location
+ext_config = true       # if true it will load/write the configs from the external config file, else it will use harcoded configs
+
+# Managing the config/file
+if ext_config == true
+
+    if File.exists? ($confloc)
+
+        puts "Loading data from #{$confloc}\n"
+
+        ymldump = YAML.load_file($confloc)
+
+        # YAML delivers a string, so int must be coverted into int and [0...3] + .to_i must be put
+        # for the grid, I get a string that I am converting it into an array again with split
+        gridl = ymldump['config'][0]['grid_length'].to_i
+        gridh = ymldump['config'][1]['grid_heigth'].to_i
+        start_gen = ymldump['config'][2]['starting_generation'].to_i
+        end_gen = ymldump['config'][3]['final_generation'].to_i
+        grid = ymldump['grid'].tr('[]", ','').split('')
+
+        puts "Data loaded!\n\n"
+
+        # Checking if the ginve grid got the right size
+        if grid.length+1 != gridl*gridh
+            puts "The given grid from the config file's size is not matching the given grid length and height, generating a new one.\n\n"
+            grid = generation_init gridl, gridh
+        end
+ 
+    else
+        
+        # We have to initialize the config file
+        puts "Config file #{$confloc} not found, intializing it."
+        write_conf grid, gridl, gridh, start_gen, end_gen
+
+    end
+
+end
+
+current_gen = 1     # We always start to calculate from generation 1
 
 while current_gen <= end_gen
 
@@ -295,4 +355,11 @@ while current_gen <= end_gen
     grid = newgrid
     current_gen = current_gen + 1
 
+end
+
+puts "Do you want to save the current data to #{$confloc}? [Y/n]"
+answer = gets.chomp   # gets gets the newline, chomp removes it
+if answer.downcase != "n"
+    write_conf grid, gridl, gridh, start_gen, end_gen
+    puts "Data correctly saved!\nProgram terminarted."
 end
