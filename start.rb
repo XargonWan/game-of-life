@@ -1,5 +1,7 @@
 #!/usr/bin/env ruby
 
+# BUG: given grid from file is is always wrong size, have to check this
+
 method "rand"
 require "yaml"
 
@@ -261,7 +263,7 @@ def next_gen ( grid, gridl )
 
 end
 
-def write_conf ( grid, gridl, gridh, start_gen, end_gen )
+def write_conf ( grid, gridl, gridh, start_gen, end_gen, delay )
 
     ymldump = {
         'title' => 'Game of Life',
@@ -269,7 +271,8 @@ def write_conf ( grid, gridl, gridh, start_gen, end_gen )
             {'grid_length'         => "#{gridl}"},
             {'grid_heigth'         => "#{gridh}"},
             {'starting_generation' => "#{start_gen}"},
-            {'final_generation'    => "#{end_gen}"}
+            {'final_generation'    => "#{end_gen}"},
+            {'delay'               => "#{delay}"}
         ],
         'grid' => "#{grid}"
     }
@@ -287,6 +290,7 @@ gridl = 8                                   # grid length (horizontal entries)
 gridh = 4                                   # grid heigth (vertical entries)
 start_gen = 1                               # Starting generation
 end_gen = 100                               # The last generation
+delay = 0.5                                 # Delay for the new generation in milliseconds
 
 grid = generation_init gridl, gridh          # Initializing the actual grid
 
@@ -308,11 +312,12 @@ if ext_config == true
         gridh = ymldump['config'][1]['grid_heigth'].to_i
         start_gen = ymldump['config'][2]['starting_generation'].to_i
         end_gen = ymldump['config'][3]['final_generation'].to_i
+        delay = ymldump['config'][4]['delay'].to_f
         grid = ymldump['grid'].tr('[]", ','').split('')
 
         puts "Data loaded!\n\n"
 
-        # Checking if the ginve grid got the right size
+        # Checking if the given grid got the right size
         if grid.length+1 != gridl*gridh
             puts "The given grid from the config file's size is not matching the given grid length and height, generating a new one.\n\n"
             grid = generation_init gridl, gridh
@@ -322,7 +327,8 @@ if ext_config == true
         
         # We have to initialize the config file
         puts "Config file #{$confloc} not found, intializing it."
-        write_conf grid, gridl, gridh, start_gen, end_gen
+        #DELAY OK #DEBUG
+        write_conf grid, gridl, gridh, start_gen, end_gen, delay
 
     end
 
@@ -339,15 +345,15 @@ while current_gen <= end_gen
         puts "#{gridh}x#{gridl}"
         print_grid grid, gridl, gridh
         puts ""
-        sleep(0.5)
+        sleep(delay)
 
     end
     newgrid = next_gen grid, gridl
     # TODO-maybe: some implementation ideas
-    # if current_gen > 1 and ! newgrid.include?("*")
-    #     puts "All cells are dead, sorry"
-    #     exit
-    # end
+    if current_gen > 1 and ! newgrid.include?("*")
+        puts "All cells are dead, sorry"
+        exit
+    end
     # if current_gen > 1 and newgrid == grid
     #     puts "We have found a balance, this cells will live forever but they will not create new ones"
     #     exit
@@ -357,9 +363,13 @@ while current_gen <= end_gen
 
 end
 
-puts "Do you want to save the current data to #{$confloc}? [Y/n]"
-answer = gets.chomp   # gets gets the newline, chomp removes it
-if answer.downcase != "n"
-    write_conf grid, gridl, gridh, start_gen, end_gen
-    puts "Data correctly saved!\nProgram terminarted."
+if ext_config == true
+    puts "Do you want to save the current data to #{$confloc}? [Y/n]"
+    answer = gets.chomp   # gets gets the newline, chomp removes it
+    if answer.downcase != "n"
+        write_conf grid, gridl, gridh, start_gen, end_gen, delay
+        puts "Data correctly saved!"
+    end
 end
+
+puts "Program terminarted."
