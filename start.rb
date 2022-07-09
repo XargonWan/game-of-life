@@ -1,7 +1,5 @@
 #!/usr/bin/env ruby
 
-# BUG: given grid from file is is always wrong size, have to check this
-
 method "rand"
 require "yaml"
 
@@ -34,13 +32,12 @@ end
 
 # Seeds the first generation of the given the array
 def generation_init ( gridl, gridh )
-        # TODO: read this data from an external file
-        # For the moment will be a random
 
         # Initializing a basic, dot filled (.) array
         gen_grid = Array.new( gridl*gridh, "." )
 
-        alives = rand((gridl*gridh)/6)+1 # Let's generate some random alive cells based on the grid size
+        # Let's generate some random alive cells based on the grid size
+        alives = rand((gridl*gridh)/6)+1
         i = 0
         while i <= alives
             value = rand(2)
@@ -108,11 +105,8 @@ def next_gen ( grid, gridl )
         # Right
         if ! borders.include?("r")
             cell = i+1 # cell that must be checked
-            #puts "Checking cell on the Right: #{cell}" #DEBUG
-            #puts "This cell is #{grid[cell]}" #DEBUG
-            if grid[cell] == "*" and cell > 0
+            if grid[cell] == "*"
                 alives = alives +1
-                #puts "This cell is alive: #{grid[cell]}" #DEBUG
             else
                 dead = dead + 1
             end
@@ -121,11 +115,8 @@ def next_gen ( grid, gridl )
         # Left
         if ! borders.include?("l")
             cell = i-1
-            #puts "Checking cell on the Left: #{cell}" #DEBUG
-            #puts "This cell is #{grid[cell]}" #DEBUG
-            if grid[cell] == "*" and cell > 0
+            if cell > 0 and grid[cell] == "*"
                 alives = alives +1
-                #puts "This cell is alive: #{grid[cell]}" #DEBUG
             else
                 dead = dead + 1
             end
@@ -134,11 +125,8 @@ def next_gen ( grid, gridl )
         # Top
         if ! borders.include?("t")
             cell = i-gridl
-            #puts "Checking cell Top: #{cell}" #DEBUG
-            #puts "This cell is #{grid[cell]}" #DEBUG
             if grid[cell] == "*" and cell > 0
                 alives = alives +1
-                #puts "This cell is alive: #{grid[cell]}" #DEBUG
             else
                 dead = dead + 1
             end
@@ -147,11 +135,8 @@ def next_gen ( grid, gridl )
         # Bottom
         if ! borders.include?("b")
             cell = i+gridl
-            #puts "Checking cell Bottom: #{cell}" #DEBUG
-            #puts "This cell is #{grid[cell]}" #DEBUG
             if grid[cell] == "*" and cell > 0
                 alives = alives +1
-                #puts "This cell is alive: #{grid[cell]}" #DEBUG
             else
                 dead = dead + 1
             end
@@ -160,11 +145,8 @@ def next_gen ( grid, gridl )
         # Top-left
         if ! borders.include?("t") and ! borders.include?("l")
             cell = i-(gridl+1)
-            #puts "Checking cell Top-left: #{cell}" #DEBUG
-            #puts "This cell is #{grid[cell]}" #DEBUG
             if grid[cell] == "*" and cell > 0
                 alives = alives +1
-                #puts "This cell is alive: #{grid[cell]}" #DEBUG
             else
                 dead = dead + 1
             end
@@ -173,11 +155,8 @@ def next_gen ( grid, gridl )
         # Top-right
         if ! borders.include?("t") and ! borders.include?("r")
             cell = i-(gridl-1)
-            #puts "Checking cell Top-right: #{cell}" #DEBUG
-            #puts "This cell is #{grid[cell]}" #DEBUG
             if grid[cell] == "*" and cell > 0
                 alives = alives +1
-                #puts "This cell is alive: #{grid[cell]}" #DEBUG
             else
                 dead = dead + 1
             end
@@ -186,11 +165,8 @@ def next_gen ( grid, gridl )
         # Bottom-left
         if ! borders.include?("b") and ! borders.include?("l")
             cell = i+(gridl-1)
-            #puts "Checking cell Bottom-left: #{cell}" #DEBUG
-            #puts "This cell is #{grid[cell]}" #DEBUG
             if grid[cell] == "*" and cell > 0
                 alives = alives +1
-                #puts "This cell is alive: #{grid[cell]}" #DEBUG
             else
                 dead = dead + 1
             end
@@ -199,8 +175,6 @@ def next_gen ( grid, gridl )
         # Bottom-right
         if ! borders.include?("b") and ! borders.include?("r")
             cell = i+(gridl+1)
-            #puts "Checking cell Bottom-right: #{cell}" #DEBUG
-            #puts "This cell is #{grid[cell]}" #DEBUG
             if grid[cell] == "*" and cell > 0
                 alives = alives +1
             else
@@ -210,50 +184,22 @@ def next_gen ( grid, gridl )
 
         # Check for life and death
         # Rules:        
-        
-        #DEBUG
-        #puts ""
-        #puts "Checking cell #{i}, is: #{grid[i]}"
-        #puts "We got #{alives} alives and #{dead} dead cells around it."
-        #DEBUG - END
+
         if grid[i] == "*"
-            #puts "gird[#{i}] instead, is: #{grid[i]}" #DEBUG
             if alives >= 2 and alives <= 3
                 # 2. Any live cell with two or three live neighbours lives on to the next generation.
-                #puts "2. Any live cell with two or three live neighbours lives on to the next generation." #DEBUG
-                #puts "gird[#{i}] instead, is: #{grid[i]}" #DEBUG
                 newgrid[i] = "*"
-                #puts "newgrid[#{i}] = #{newgrid[i]}" #DEBUG
-                #puts "gird[#{i}] instead, is: #{grid[i]}" #DEBUG
             else
                 # 1. Any live cell with fewer than two live neighbours dies.
                 # 3. Any live cell with more than three live neighbours dies.
-                #puts "1. Any live cell with fewer than two live neighbours dies." #DEBUG
-                #puts "3. Any live cell with more than three live neighbours dies." #DEBUG
                 newgrid[i] = "."
-                #puts "newgrid[#{i}] = #{newgrid[i]}" #DEBUG
-                #puts "gird[#{i}] instead, is: #{grid[i]}" #DEBUG
             end
         end
 
         if grid[i] == "." and alives == 3
             # 4. Any dead cell with exactly three live neighbours becomes a live cell.
-            #puts "4. Any dead cell with exactly three live neighbours becomes a live cell." #DEBUG
             newgrid[i] = "*"
-            #puts "newgrid[#{i}] = #{newgrid[i]}" #DEBUG
-            #puts "gird[#{i}] instead, is: #{grid[i]}" #DEBUG
         end
-
-        #DEBUG
-        #puts "From the next generation cell ##{i} will be #{newgrid[i]}"
-        #puts ""
-        #DEBUG - END
-
-        #DEBUG
-        #puts "Cells alive around = #{alives}"
-        #puts "Cells dead around = #{dead}"
-        #print "Press any key to continue\r"
-        #gets
 
         i = i+1
 
@@ -318,7 +264,7 @@ if ext_config == true
         puts "Data loaded!\n\n"
 
         # Checking if the given grid got the right size
-        if grid.length+1 != gridl*gridh
+        if grid.length != gridl*gridh
             puts "The given grid from the config file's size is not matching the given grid length and height, generating a new one.\n\n"
             grid = generation_init gridl, gridh
         end
@@ -327,7 +273,6 @@ if ext_config == true
         
         # We have to initialize the config file
         puts "Config file #{$confloc} not found, intializing it."
-        #DELAY OK #DEBUG
         write_conf grid, gridl, gridh, start_gen, end_gen, delay
 
     end
@@ -349,11 +294,11 @@ while current_gen <= end_gen
 
     end
     newgrid = next_gen grid, gridl
-    # TODO-maybe: some implementation ideas
     if current_gen > 1 and ! newgrid.include?("*")
         puts "All cells are dead, sorry"
         exit
     end
+    # TODO: some future implementation ideas
     # if current_gen > 1 and newgrid == grid
     #     puts "We have found a balance, this cells will live forever but they will not create new ones"
     #     exit
